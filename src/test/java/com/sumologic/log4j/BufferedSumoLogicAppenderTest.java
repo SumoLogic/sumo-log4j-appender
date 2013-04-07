@@ -9,6 +9,7 @@ import org.apache.log4j.helpers.LogLog;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
@@ -27,23 +28,27 @@ public class BufferedSumoLogicAppenderTest {
     private BufferedSumoLogicAppender appender;
 
 
+    private void setUpLogger(BufferedSumoLogicAppender appender) {
+        loggerInTest = Logger.getLogger("BufferedSumoLogicAppenderTest");
+        loggerInTest.addAppender(appender);
+        loggerInTest.setAdditivity(false);
+
+    }
+
     private void setUpLogger(int batchSize, int windowSize, int precision) {
         LogLog.setInternalDebugging(true);
 
         appender = new BufferedSumoLogicAppender();
         appender.setUrl(ENDPOINT_URL);
         appender.setMessagesPerRequest(batchSize);
-        appender.setRequestRate(windowSize);
-        appender.setPrecisionRate(precision);
+        appender.setMaxFlushInterval(windowSize);
+        appender.setFlushingAccuracy(precision);
 
         // TODO: Shouldn't there be a default layout?
         appender.setLayout(new PatternLayout("%m%n"));
         appender.activateOptions();
 
-        loggerInTest = Logger.getLogger("TestSingleMessage");
-        loggerInTest.addAppender(appender);
-        loggerInTest.setAdditivity(false);
-
+        setUpLogger(appender);
     }
 
 
@@ -57,8 +62,10 @@ public class BufferedSumoLogicAppenderTest {
 
     @After
     public void tearDown() throws Exception {
-        loggerInTest.removeAllAppenders();
-        server.stop();
+        if (loggerInTest != null)
+            loggerInTest.removeAllAppenders();
+        if (server != null)
+            server.stop();
     }
 
     @Test
@@ -69,7 +76,7 @@ public class BufferedSumoLogicAppenderTest {
 
         Thread.sleep(100);
         assertEquals(handler.getExchanges().size(), 1);
-        assertEquals(handler.getExchanges().get(0).getBody(), "---This is a message\n");
+        assertEquals(handler.getExchanges().get(0).getBody(), "This is a message\n");
     }
 
     @Test
@@ -82,7 +89,7 @@ public class BufferedSumoLogicAppenderTest {
             Thread.sleep(100);
         }
 
-        assertEquals(handler.getExchanges().size(), numMessages);
+        assertEquals(numMessages, handler.getExchanges().size());
     }
 
 
@@ -104,7 +111,7 @@ public class BufferedSumoLogicAppenderTest {
     @Test
     public void testBatchingByWindow() throws Exception {
         // Small window, ensure all messages get batched by time
-        setUpLogger(10000, 500, 500);
+        setUpLogger(10000, 500, 10);
 
         loggerInTest.info("message1");
         loggerInTest.info("message2");
@@ -112,7 +119,7 @@ public class BufferedSumoLogicAppenderTest {
         loggerInTest.info("message4");
         loggerInTest.info("message5");
 
-        Thread.sleep(1000);
+        Thread.sleep(520);
 
         loggerInTest.info("message1");
         loggerInTest.info("message2");
@@ -120,13 +127,48 @@ public class BufferedSumoLogicAppenderTest {
         loggerInTest.info("message4");
         loggerInTest.info("message5");
 
-        Thread.sleep(1000);
+        Thread.sleep(520);
 
 
-        assertEquals(handler.getExchanges().size(), 2);
+        assertEquals(2, handler.getExchanges().size());
         MaterializedHttpRequest request1 = handler.getExchanges().get(0);
         MaterializedHttpRequest request2 = handler.getExchanges().get(1);
         System.out.println(request1.getBody());
 
     }
+
+
+    @Test
+    // Start with an appender without its URL set. THEN set the property and
+    // make sure everything's still there.
+    public void testNoUrlSetInitially() throws Exception {
+        LogLog.setInternalDebugging(true);
+
+        appender = new BufferedSumoLogicAppender();
+        appender.setMessagesPerRequest(1000);
+        appender.setMaxFlushInterval(100);
+        appender.setFlushingAccuracy(1);
+        appender.setRetryInterval(1);
+
+        // TODO: Shouldn't there be a default layout?
+        appender.setLayout(new PatternLayout("%m%n"));
+        appender.activateOptions();
+
+        setUpLogger(appender);
+
+
+        for (int i = 0; i < 100; i++) {
+            loggerInTest.info("message " + i);
+        }
+
+
+        appender.setUrl(ENDPOINT_URL);
+        appender.activateOptions();
+
+        Thread.sleep(1000);
+        assertEquals(1, handler.getExchanges().size());
+
+    }
+
+
 }
