@@ -1,12 +1,12 @@
 package com.sumologic.log4j.aggregation;
 
+import com.sumologic.log4j.queue.BufferWithFifoEviction;
+import com.sumologic.log4j.queue.CostBoundedConcurrentQueue;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.junit.Assert.assertEquals;
 
@@ -15,18 +15,27 @@ import static org.junit.Assert.assertEquals;
  * Date: 4/4/13
  * Time: 7:40 PM
  */
-public class QueueFlushingTaskTest {
+public class BufferFlushingTaskTest {
+
+    public CostBoundedConcurrentQueue.CostAssigner<String> sizeElements =
+        new CostBoundedConcurrentQueue.CostAssigner<String>() {
+            @Override
+            public long cost(String e) {
+                return e.length();
+            }
+    };
 
     @Test
     public void testFlushBySize() throws Exception {
         final List<List<String>> tasks = new ArrayList<List<String>>();
 
-        BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
-        QueueFlushingTask<String, List<String>> task =
-                new QueueFlushingTask<String, List<String>>(queue) {
+        BufferWithFifoEviction<String> queue =
+                new BufferWithFifoEviction<String>(1000, sizeElements);
+        BufferFlushingTask<String, List<String>> task =
+                new BufferFlushingTask<String, List<String>>(queue) {
 
             @Override
-            protected long getRequestRate() {
+            protected long getMaxFlushInterval() {
                 return Integer.MAX_VALUE;
             }
 
