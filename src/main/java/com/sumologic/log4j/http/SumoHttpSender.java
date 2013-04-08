@@ -76,25 +76,21 @@ public class SumoHttpSender {
                 try {
                     Thread.sleep(retryInterval);
                 } catch (InterruptedException e1) {
-                    break;
+                    e1.printStackTrace();
                 }
             }
         } while (! success);
     }
 
-    private void trySend(String body, String name) throws IOException {
+    private void trySend(String body, String name) {
         HttpPost post = null;
         try {
-            if (url == null)
-                throw new IOException("Unknown endpoint");
-
             post = new HttpPost(url);
             post.setHeader("X-Sumo-Name", name);
             post.setEntity(new StringEntity(body, HTTP.PLAIN_TEXT_TYPE, HTTP.UTF_8));
             HttpResponse response = httpClient.execute(post);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != 200) {
-                // TODO: Drop if message is 4xx, keep trying if message is 5xx or no response!
                 LogLog.warn(String.format("Received HTTP error from Sumo Service: %d", statusCode));
             }
             //need to consume the body if you want to re-use the connection.
@@ -103,7 +99,6 @@ public class SumoHttpSender {
         } catch (IOException e) {
             LogLog.warn("Could not send log to Sumo Logic", e);
             try { post.abort(); } catch (Exception ignore) {}
-            throw e;
         }
     }
 

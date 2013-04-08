@@ -1,24 +1,26 @@
 package com.sumologic.log4j.http;
 
-import com.sumologic.log4j.aggregation.BufferFlushingTask;
-import com.sumologic.log4j.queue.BufferWithEviction;
+import com.sumologic.log4j.aggregation.QueueFlushingTask;
 import org.apache.log4j.helpers.LogLog;
 
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Author: Jose Muniz (jose@sumologic.com)
  * Date: 4/4/13
  * Time: 10:48 PM
  */
-public class SumoBufferFlushingTask extends BufferFlushingTask<String, String> {
+public class SumoQueueFlushingTask extends QueueFlushingTask<String, String> {
+
+    private final static String MESSAGE_BOUNDARY = "---";
 
     private SumoHttpSender sender;
-    private long maxFlushInterval;
+    private long requestRate;
     private long messagesPerRequest;
     private String name;
 
-    public SumoBufferFlushingTask(BufferWithEviction<String> queue) {
+    public SumoQueueFlushingTask(BlockingQueue queue) {
         super(queue);
     }
 
@@ -34,13 +36,13 @@ public class SumoBufferFlushingTask extends BufferFlushingTask<String, String> {
         this.messagesPerRequest = messagesPerRequest;
     }
 
-    public void setMaxFlushInterval(long maxFlushInterval) {
-        this.maxFlushInterval = maxFlushInterval;
+    public void setRequestRate(long requestRate) {
+        this.requestRate = requestRate;
     }
 
     @Override
-    protected long getMaxFlushInterval() {
-        return maxFlushInterval;
+    protected long getRequestRate() {
+        return requestRate;
     }
 
     @Override
@@ -57,6 +59,7 @@ public class SumoBufferFlushingTask extends BufferFlushingTask<String, String> {
     protected String aggregate(List<String> messages) {
         StringBuilder builder = new StringBuilder(messages.size() * 10);
         for (String message: messages) {
+            builder.append(MESSAGE_BOUNDARY);
             builder.append(message);
         }
         return builder.toString();

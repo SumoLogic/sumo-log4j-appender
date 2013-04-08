@@ -26,15 +26,14 @@ package com.sumologic.log4j;
  * under the License.
  */
 
-import com.sumologic.log4j.aggregation.SumoBufferFlusher;
 import com.sumologic.log4j.http.SumoHttpSender;
-import com.sumologic.log4j.queue.BufferWithEviction;
-import com.sumologic.log4j.queue.BufferWithFifoEviction;
+import com.sumologic.log4j.http.SumoQueueFlushingTask;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Layout;
-import org.apache.log4j.helpers.LogLog;
 import org.apache.log4j.spi.LoggingEvent;
-import static com.sumologic.log4j.queue.CostBoundedConcurrentQueue.CostAssigner;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Appender that sends log messages to Sumo Logic.
@@ -43,21 +42,23 @@ import static com.sumologic.log4j.queue.CostBoundedConcurrentQueue.CostAssigner;
  */
 public class BufferedSumoLogicAppender extends AppenderSkeleton {
 
+    //private static long ms(long seconds) {
+    //    return seconds * 1000;
+    //}
+
     private String url = null;
     private int connectionTimeout = 1000;
     private int socketTimeout = 60000;
-    private int retryInterval = 10000;        // Once a request fails, how often until we retry.
+    private int retryInterval = 10000;
 
-    private long messagesPerRequest = 100;    // How many messages need to be in the queue before we flush
-    private long maxFlushInterval = 10000;    // Maximum interval between flushes (ms)
-    private long flushingAccuracy = 250;      // How often the flushed thread looks into the message queue (ms)
-    private String sourceName = "Log4J-SumoObject"; // Name to stamp for querying with _sourceName
-
-    private long maxQueueSizeBytes = 1000000;
+    private long messagesPerRequest = 100;
+    private long requestRate = 10000;
+    private String name = "Log4J-SumoObject";
+    private long precisionRate = 5000;        // How often we'll look into the Sumo queue
 
     private SumoHttpSender sender;
-    private SumoBufferFlusher flusher;
-    private BufferWithEviction<String> queue;
+    private SumoQueueFlushingTask flushingTask;
+    private LinkedBlockingQueue<String> queue;
 
     /* All the parameters */
 
@@ -65,24 +66,20 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
         this.url = url;
     }
 
-    public void setMaxQueueSizeBytes(long maxQueueSizeBytes) {
-        this.maxQueueSizeBytes = maxQueueSizeBytes;
-    }
-
     public void setMessagesPerRequest(long messagesPerRequest) {
         this.messagesPerRequest = messagesPerRequest;
     }
 
-    public void setMaxFlushInterval(long maxFlushInterval) {
-        this.maxFlushInterval = maxFlushInterval;
+    public void setRequestRate(long requestRate) {
+        this.requestRate = requestRate;
     }
 
-    public void setSourceName(String sourceName) {
-        this.sourceName = sourceName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public void setFlushingAccuracy(long flushingAccuracy) {
-        this.flushingAccuracy = flushingAccuracy;
+    public void setPrecisionRate(long precisionRate) {
+        this.precisionRate = precisionRate;
     }
 
     public void setConnectionTimeout(int connectionTimeout) {
@@ -99,41 +96,37 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
 
     @Override
     public void activateOptions() {
-        LogLog.debug("Activating options");
-        /* Initialize queue */
 
-        if (queue == null) {
-            queue = new BufferWithFifoEviction<String>(maxQueueSizeBytes, new CostAssigner<String>() {
-              @Override
-              public long cost(String e) {
-                 return e.length();
-              }
-            });
-        }
+        /* Initialize queue */
+        queue = new LinkedBlockingQueue<String>();
 
         /* Initialize sender */
         if (sender == null)
             sender = new SumoHttpSender();
 
-        sender.setRetryInterval(retryInterval);
         sender.setConnectionTimeout(connectionTimeout);
+        sender.setRetryInterval(retryInterval);
         sender.setSocketTimeout(socketTimeout);
         sender.setUrl(url);
-
         sender.init();
 
-        /* Initialize flusher  */
-        if (flusher != null)
-            flusher.stop();
 
-        flusher = new SumoBufferFlusher(flushingAccuracy,
-                    messagesPerRequest,
-                    maxFlushInterval,
-                    sourceName,
-                    sender,
-                    queue);
-        flusher.start();
+        /* Initialize FlushingTask */
+        if (flushingTask == null)
+            flushingTask = new SumoQueueFlushingTask(queue);
 
+        flushingTask.setMessagesPerRequest(messagesPerRequest);
+        flushingTask.setRequestRate(requestRate);
+        flushingTask.setName(name);
+        flushingTask.setSender(sender);
+
+        /* Start flushing! */
+        Executors.newSingleThreadScheduledExecutor().
+                scheduleAtFixedRate(
+                        flushingTask,
+                        0,
+                        precisionRate,
+                        TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -155,15 +148,13 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
         }
 
         queue.add(builder.toString());
+        //sender.send(builder.toString(), name);
     }
 
     @Override
     public void close() {
         sender.close();
         sender = null;
-
-        flusher.stop();
-        flusher = null;
     }
 
     @Override
