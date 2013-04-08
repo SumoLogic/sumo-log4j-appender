@@ -16,9 +16,7 @@ import org.apache.log4j.helpers.LogLog;
 import java.io.IOException;
 
 /**
- * Author: Jose Muniz (jose@sumologic.com)
- * Date: 4/4/13
- * Time: 8:16 PM
+ * @author: Jose Muniz (jose@sumologic.com)
  */
 public class SumoHttpSender {
 

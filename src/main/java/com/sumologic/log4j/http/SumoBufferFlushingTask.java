@@ -7,9 +7,7 @@ import org.apache.log4j.helpers.LogLog;
 import java.util.List;
 
 /**
- * Author: Jose Muniz (jose@sumologic.com)
- * Date: 4/4/13
- * Time: 10:48 PM
+ * @author: Jose Muniz (jose@sumologic.com)
  */
 public class SumoBufferFlushingTask extends BufferFlushingTask<String, String> {
 

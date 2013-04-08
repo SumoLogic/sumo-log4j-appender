@@ -12,9 +12,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Author: Jose Muniz (jose@sumologic.com)
- * Date: 4/7/13
- * Time: 12:12 AM
+ * @author: Jose Muniz (jose@sumologic.com)
  */
 public class CostBoundedConcurrentQueueTest {
 

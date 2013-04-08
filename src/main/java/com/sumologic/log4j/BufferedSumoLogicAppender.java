@@ -39,7 +39,7 @@ import static com.sumologic.log4j.queue.CostBoundedConcurrentQueue.CostAssigner;
 /**
  * Appender that sends log messages to Sumo Logic.
  *
- * @author Stefan Zier (stefan@sumologic.com)
+ * @author Jose Muniz (jose@sumologic.com)
  */
 public class BufferedSumoLogicAppender extends AppenderSkeleton {
 
@@ -55,9 +55,9 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
 
     private long maxQueueSizeBytes = 1000000;
 
-    private SumoHttpSender sender;
+    volatile private SumoHttpSender sender;
     private SumoBufferFlusher flusher;
-    private BufferWithEviction<String> queue;
+    volatile private BufferWithEviction<String> queue;
 
     /* All the parameters */
 
@@ -100,8 +100,8 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
     @Override
     public void activateOptions() {
         LogLog.debug("Activating options");
-        /* Initialize queue */
 
+        /* Initialize queue */
         if (queue == null) {
             queue = new BufferWithFifoEviction<String>(maxQueueSizeBytes, new CostAssigner<String>() {
               @Override
@@ -109,6 +109,8 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
                  return e.length();
               }
             });
+        } else {
+            queue.setCapacity(maxQueueSizeBytes);
         }
 
         /* Initialize sender */
@@ -139,6 +141,7 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
     @Override
     protected void append(LoggingEvent event) {
         if (!checkEntryConditions()) {
+            LogLog.warn("Appender not initialized. Dropping log entry");
             return;
         }
 

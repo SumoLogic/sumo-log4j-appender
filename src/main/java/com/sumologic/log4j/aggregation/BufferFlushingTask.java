@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Task to perform a single flushing check
  *
- * Author: Jose Muniz (jose@sumologic.com)
+ * @author: Jose Muniz (jose@sumologic.com)
  */
 public abstract class BufferFlushingTask<In, Out> implements Runnable {
 
@@ -37,7 +37,7 @@ public abstract class BufferFlushingTask<In, Out> implements Runnable {
                     messageQueue.size()));
             Out body = aggregate(messages);
             sendOut(body, getName());
-            }
+        }
     }
 
 
@@ -63,7 +63,12 @@ public abstract class BufferFlushingTask<In, Out> implements Runnable {
     @Override
     public void run() {
         if (needsFlushing()) {
-            flushAndSend();
+            try {
+                flushAndSend();
+            }
+            catch (Exception e) {
+                LogLog.warn("Exception while attempting to flush and send", e);
+            }
         }
     }
 

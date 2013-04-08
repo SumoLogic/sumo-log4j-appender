@@ -12,9 +12,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Author: Jose Muniz (jose@sumologic.com)
- * Date: 4/6/13
- * Time: 3:41 PM
+ * @author: Jose Muniz (jose@sumologic.com)
  */
 public class BufferWithFifoEvictionTest {
 

@@ -10,9 +10,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Author: Jose Muniz (jose@sumologic.com)
- * Date: 4/5/13
- * Time: 6:13 PM
+ * @author: Jose Muniz (jose@sumologic.com)
  */
 public class SumoBufferFlusher {
     private SumoBufferFlushingTask flushingTask;

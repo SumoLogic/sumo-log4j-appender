@@ -11,9 +11,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Author: Jose Muniz (jose@sumologic.com)
- * Date: 4/4/13
- * Time: 7:40 PM
+ * @author: Jose Muniz (jose@sumologic.com)
  */
 public class BufferFlushingTaskTest {
 

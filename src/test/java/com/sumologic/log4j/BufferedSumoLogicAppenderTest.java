@@ -13,9 +13,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Author: Jose Muniz (jose@sumologic.com)
- * Date: 4/4/13
- * Time: 11:27 PM
+ * @author: Jose Muniz (jose@sumologic.com)
  */
 public class BufferedSumoLogicAppenderTest {
 
