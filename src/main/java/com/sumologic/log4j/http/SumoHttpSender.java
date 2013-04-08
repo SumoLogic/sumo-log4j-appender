@@ -22,10 +22,10 @@ public class SumoHttpSender {
 
     private long retryInterval = 10000L;
 
-    private String url = null;
+    private volatile String url = null;
     private int connectionTimeout = 1000;
     private int socketTimeout = 60000;
-    private HttpClient httpClient = null;
+    private volatile HttpClient httpClient = null;
 
 
     public void setRetryInterval(long retryInterval) {

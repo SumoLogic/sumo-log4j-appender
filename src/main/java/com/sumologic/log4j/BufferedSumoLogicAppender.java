@@ -55,7 +55,7 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
 
     private long maxQueueSizeBytes = 1000000;
 
-    volatile private SumoHttpSender sender;
+    private SumoHttpSender sender;
     private SumoBufferFlusher flusher;
     volatile private BufferWithEviction<String> queue;
 
@@ -107,6 +107,8 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
             queue = new BufferWithFifoEviction<String>(maxQueueSizeBytes, new CostAssigner<String>() {
               @Override
               public long cost(String e) {
+                  // Note: This is only an estimate for total byte usage, since in UTF-8 encoding,
+                  // the size of one character may be > 1 byte.
                  return e.length();
               }
             });

@@ -2,6 +2,7 @@ package com.sumologic.log4j.queue;
 
 import java.util.Collection;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A queue with a maximum capacity, where capacity is defined as the sum of the lengths of the
@@ -20,7 +21,7 @@ public class CostBoundedConcurrentQueue<T> {
     private CostAssigner<T> costAssigner;
 
     private long capacity = 0;
-    private long cost = 0;
+    private AtomicLong cost = new AtomicLong(0);
 
 
     public CostBoundedConcurrentQueue(long capacity, CostAssigner<T> costAssigner) {
@@ -36,7 +37,7 @@ public class CostBoundedConcurrentQueue<T> {
      * @return the cost
      */
     public long cost() {
-        return cost;
+        return cost.get();
     }
 
     /**
@@ -56,9 +57,11 @@ public class CostBoundedConcurrentQueue<T> {
      */
     public int drainTo(Collection<T> collection) {
 
+        assert collection.isEmpty();
+
         int elementsDrained = queue.drainTo(collection);
         for (T e: collection) {
-            cost -= costAssigner.cost(e);
+            cost.addAndGet(- costAssigner.cost(e));
         }
 
         return elementsDrained;
@@ -75,12 +78,17 @@ public class CostBoundedConcurrentQueue<T> {
      */
     public boolean offer(T e) {
         long eCost = costAssigner.cost(e);
-        if (eCost + cost > capacity) {
-            return false;
-        } else {
-            cost += eCost;
-            return queue.offer(e);
+
+        // Atomically check capacity and increase usage
+        synchronized (this) {
+            if (eCost + cost.get() > capacity) {
+                return false;
+            } else {
+                cost.addAndGet(eCost);
+            }
         }
+
+        return queue.offer(e);
     }
 
     /**
@@ -90,7 +98,7 @@ public class CostBoundedConcurrentQueue<T> {
     public T poll() {
         T e = queue.poll();
         if (e != null)
-            cost -= costAssigner.cost(e);
+            cost.addAndGet(-costAssigner.cost(e));
 
         return e;
     }

@@ -4,10 +4,7 @@ import com.sumologic.log4j.http.SumoBufferFlushingTask;
 import com.sumologic.log4j.http.SumoHttpSender;
 import com.sumologic.log4j.queue.BufferWithEviction;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author: Jose Muniz (jose@sumologic.com)
@@ -15,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 public class SumoBufferFlusher {
     private SumoBufferFlushingTask flushingTask;
     private ScheduledFuture future;
+    private ScheduledExecutorService executor;
     private long flushingAccuracy;
 
 
@@ -38,16 +36,21 @@ public class SumoBufferFlusher {
 
     public void start() {
         /* Start flushing! */
-        future =
+
+        executor =
             Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
-                   Thread thread = new Thread(r);
+                    Thread thread = new Thread(r);
                     thread.setName("SumoBufferFlusherThread");
                     thread.setDaemon(true);
                     return thread;
                 }
-            }).
+            });
+
+
+        future =
+            executor.
                 scheduleAtFixedRate(flushingTask, 0, flushingAccuracy, TimeUnit.MILLISECONDS);
 
     }
@@ -55,9 +58,14 @@ public class SumoBufferFlusher {
 
     public void stop() {
         // Keep the current task running until it's done sending
-        future.cancel(false);
-        future = null;
+        if (future != null) {
+            future.cancel(false);
+            future = null;
+        }
 
+        if (executor != null) {
+            executor.shutdown();
+        }
     }
 
 

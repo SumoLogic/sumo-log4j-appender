@@ -14,16 +14,15 @@ import java.util.List;
  */
 public abstract class BufferFlushingTask<In, Out> implements Runnable {
 
-    private Date dateOfLastFlush = new java.util.Date();
+    private long timeOfLastFlush = System.currentTimeMillis();
     private BufferWithEviction<In> messageQueue;
 
     private boolean needsFlushing() {
-        Date currentTime = new java.util.Date();
-        Date dateOfNextFlush =
-                new java.util.Date(dateOfLastFlush.getTime() + getMaxFlushInterval());
+        long currentTime = System.currentTimeMillis();
+        long dateOfNextFlush = timeOfLastFlush + getMaxFlushInterval();
 
         return (messageQueue.size() >= getMessagesPerRequest()) ||
-                (currentTime.after(dateOfNextFlush));
+               (currentTime >= dateOfNextFlush);
     }
 
     private void flushAndSend() {
