@@ -8,9 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * strings it contains.  It implements a strict subset of the functionality of interface
  * <tt>java.util.Queue</tt>
  *
- * Author: Jose Muniz (jose@sumologic.com)
- * Date: 4/6/13
- * Time: 11:49 PM
+ * @author: Jose Muniz (jose@sumologic.com)
  */
 public class CostBoundedConcurrentQueue<T> {
 

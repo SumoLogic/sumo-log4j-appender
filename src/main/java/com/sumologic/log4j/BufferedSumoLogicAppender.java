@@ -73,6 +73,7 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
         this.messagesPerRequest = messagesPerRequest;
     }
 
+
     public void setMaxFlushInterval(long maxFlushInterval) {
         this.maxFlushInterval = maxFlushInterval;
     }
