@@ -27,7 +27,6 @@ public class CostBoundedConcurrentQueue<T> {
     public CostBoundedConcurrentQueue(long capacity, CostAssigner<T> costAssigner) {
         this.queue = new LinkedBlockingQueue<T>();
         this.costAssigner = costAssigner;
-
         this.capacity = capacity;
     }
 
@@ -79,7 +78,7 @@ public class CostBoundedConcurrentQueue<T> {
     public boolean offer(T e) {
         long eCost = costAssigner.cost(e);
 
-        // Atomically check capacity and increase usage
+        // Atomically check capacity and optimistically increase usage
         synchronized (this) {
             if (eCost + cost.get() > capacity) {
                 return false;
@@ -88,7 +87,12 @@ public class CostBoundedConcurrentQueue<T> {
             }
         }
 
-        return queue.offer(e);
+        boolean wasAdded = queue.offer(e);
+        if (! wasAdded) {
+            cost.addAndGet(-eCost);
+        }
+
+        return wasAdded;
     }
 
     /**

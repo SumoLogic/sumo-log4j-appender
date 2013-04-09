@@ -1,5 +1,3 @@
-package com.sumologic.log4j;
-
 /**
  *    _____ _____ _____ _____    __    _____ _____ _____ _____
  *   |   __|  |  |     |     |  |  |  |     |   __|     |     |
@@ -25,6 +23,8 @@ package com.sumologic.log4j;
  * specific language governing permissions and limitations
  * under the License.
  */
+
+package com.sumologic.log4j;
 
 import com.sumologic.log4j.aggregation.SumoBufferFlusher;
 import com.sumologic.log4j.http.SumoHttpSender;
