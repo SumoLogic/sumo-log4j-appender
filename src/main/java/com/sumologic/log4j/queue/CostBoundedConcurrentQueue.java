@@ -87,12 +87,8 @@ public class CostBoundedConcurrentQueue<T> {
             }
         }
 
-        boolean wasAdded = queue.offer(e);
-        if (! wasAdded) {
-            cost.addAndGet(-eCost);
-        }
-
-        return wasAdded;
+        // Underlying queue is unbounded, so this is guaranteed to succeed.
+        return queue.add(e);
     }
 
     /**
