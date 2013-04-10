@@ -160,7 +160,11 @@ public class BufferedSumoLogicAppender extends AppenderSkeleton {
             }
         }
 
-        queue.add(builder.toString());
+        try {
+            queue.add(builder.toString());
+        } catch (Exception e) {
+            LogLog.error("Unable to insert log entry into log queue. ", e);
+        }
     }
 
     @Override

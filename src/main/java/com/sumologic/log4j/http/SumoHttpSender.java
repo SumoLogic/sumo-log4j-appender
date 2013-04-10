@@ -92,14 +92,18 @@ public class SumoHttpSender {
             HttpResponse response = httpClient.execute(post);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != 200) {
-                // TODO: Drop if message is 4xx, keep trying if message is 5xx or no response!
                 LogLog.warn(String.format("Received HTTP error from Sumo Service: %d", statusCode));
+                // Not success. Only retry if status is unavailable.
+                if (statusCode == 503) {
+                    throw new IOException("Server unavailable");
+                }
             }
             //need to consume the body if you want to re-use the connection.
             LogLog.debug("Successfully sent log request to Sumo Logic");
             EntityUtils.consume(response.getEntity());
         } catch (IOException e) {
-            LogLog.warn("Could not send log to Sumo Logic", e);
+            LogLog.warn("Could not send log to Sumo Logic");
+            LogLog.debug("Reason:", e);
             try { post.abort(); } catch (Exception ignore) {}
             throw e;
         }
