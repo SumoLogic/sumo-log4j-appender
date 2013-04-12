@@ -102,7 +102,7 @@ public class SumoHttpSender {
             LogLog.debug("Successfully sent log request to Sumo Logic");
             EntityUtils.consume(response.getEntity());
         } catch (IOException e) {
-            LogLog.warn("Could not send log to Sumo Logic");
+            LogLog.debug("Could not send log to Sumo Logic");
             LogLog.debug("Reason:", e);
             try { post.abort(); } catch (Exception ignore) {}
             throw e;
