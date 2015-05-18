@@ -89,7 +89,7 @@ public class SumoBufferFlusher {
         }
 
         if (executor != null) {
-            executor.shutdown();
+            executor.shutdownNow();
         }
     }
 
