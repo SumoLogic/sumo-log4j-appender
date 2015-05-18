@@ -77,7 +77,7 @@ public class SumoHttpSender {
                     break;
                 }
             }
-        } while (! success);
+        } while (!success && ! Thread.currentThread().isInterrupted() );
     }
 
     private void trySend(String body, String name) throws IOException {
