@@ -87,11 +87,10 @@ public class SumoBufferFlushingTask extends BufferFlushingTask<String, String> {
 
     @Override
     protected void sendOut(String body, String name) {
-        if (sender.isInitialized()) {
+        if (sender != null && sender.isInitialized()) {
             sender.send(body, name);
         } else {
             LogLog.error("HTTPSender is not initialized");
-
         }
     }
 }
