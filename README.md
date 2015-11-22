@@ -16,6 +16,11 @@ Here is a sample log4.properties file. Make sure to replace [collector-url] with
     log4j.appender.sumo.layout=org.apache.log4j.PatternLayout
     log4j.appender.sumo.layout.ConversionPattern=%d{DATE} %5p %c{1}:%L - %m%n
     log4j.appender.sumo.url=<YOUR_URL_HERE>
+    log4j.appender.sumo.proxyAuth=<YOUR AUTHTYPE: basic or ntlm>
+    log4j.appender.sumo.proxyUser=<YOUR_USERNAME>
+    log4j.appender.sumo.proxyPassword=<YOUR_PASSWORD>
+    log4j.appender.sumo.proxyDdomain=<YOUR_NTLM_DOMAIN>
+
 
 To build:
 - Run "mvn clean package" on the pom.xml in the main level of this project.

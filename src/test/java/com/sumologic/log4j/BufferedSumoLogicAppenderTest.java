@@ -53,8 +53,8 @@ public class BufferedSumoLogicAppenderTest {
 
     private void setUpLogger(BufferedSumoLogicAppender appender) {
         loggerInTest = Logger.getLogger("BufferedSumoLogicAppenderTest");
-        loggerInTest.addAppender(appender);
         loggerInTest.setAdditivity(false);
+        loggerInTest.addAppender(appender);
 
     }
 
@@ -69,9 +69,9 @@ public class BufferedSumoLogicAppenderTest {
 
         // TODO: Shouldn't there be a default layout?
         appender.setLayout(new PatternLayout("%m%n"));
+        setUpLogger(appender);
         appender.activateOptions();
 
-        setUpLogger(appender);
     }
 
 
@@ -104,12 +104,12 @@ public class BufferedSumoLogicAppenderTest {
 
     @Test
     public void testMultipleMessages() throws Exception {
-        setUpLogger(1, 10000, 10);
+        setUpLogger(1, 10000, 1);
 
-        int numMessages = 20;
+        int numMessages = 5;
         for (int i = 0; i < numMessages; i ++) {
             loggerInTest.info("info " + i);
-            Thread.sleep(100);
+            Thread.sleep(1500);
         }
 
         assertEquals(numMessages, handler.getExchanges().size());
@@ -119,7 +119,7 @@ public class BufferedSumoLogicAppenderTest {
     @Test
     public void testBatchingBySize() throws Exception {
         // Huge window, ensure all messages get batched into one
-        setUpLogger(100, 10000, 10);
+        setUpLogger(100, 10000, 1);
 
         int numMessages = 100;
         for (int i = 0; i < numMessages; i ++) {
@@ -134,7 +134,7 @@ public class BufferedSumoLogicAppenderTest {
     @Test
     public void testBatchingByWindow() throws Exception {
         // Small window, ensure all messages get batched by time
-        setUpLogger(10000, 500, 10);
+        setUpLogger(10000, 500, 1);
 
         loggerInTest.info("message1");
         loggerInTest.info("message2");
@@ -142,7 +142,7 @@ public class BufferedSumoLogicAppenderTest {
         loggerInTest.info("message4");
         loggerInTest.info("message5");
 
-        Thread.sleep(520);
+        Thread.sleep(1520);
 
         loggerInTest.info("message1");
         loggerInTest.info("message2");
