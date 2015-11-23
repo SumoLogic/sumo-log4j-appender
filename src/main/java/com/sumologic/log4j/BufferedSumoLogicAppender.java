@@ -48,7 +48,7 @@ import static com.sumologic.log4j.queue.CostBoundedConcurrentQueue.CostAssigner;
 public class BufferedSumoLogicAppender extends AppenderSkeleton {
 
     private String url = null;
-    
+
     private String proxyHost = null;
     private int proxyPort = -1;
     private String proxyAuth = null;

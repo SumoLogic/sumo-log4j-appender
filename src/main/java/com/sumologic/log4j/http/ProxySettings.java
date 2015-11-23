@@ -14,8 +14,6 @@ public class ProxySettings {
     private String domain = null;
 
 
-    public ProxySettings() {}
-
     public ProxySettings(String hostname, int port, String authType, String username, String password, String domain) {
         this.hostname = hostname;
         this.port = port;
@@ -23,6 +21,8 @@ public class ProxySettings {
         this.username = username;
         this.password = password;
         this.domain = domain;
+
+        normalize();
     }
 
     public String getDomain() {
@@ -81,7 +81,7 @@ public class ProxySettings {
 
     private void normalize() {
         // Default to Basic Auth when credentials are specified without an auth type
-        if (username == null && authType == null)
+        if (username != null && authType == null)
             this.authType = BASIC_AUTH;
     }
 
@@ -96,7 +96,7 @@ public class ProxySettings {
             if (NTLM_AUTH.equals(authType) && domain == null)
                 throw new IllegalArgumentException("domain property must be set if authType property is ntlm");
 
-            if (authType != null && ! NTLM_AUTH.equals(authType) || BASIC_AUTH.equals(authType))
+            if (authType != null && ! (NTLM_AUTH.equals(authType) || BASIC_AUTH.equals(authType)))
                 throw new IllegalArgumentException("authType type not supported: " + authType);
         }
     }
