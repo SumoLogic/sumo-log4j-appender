@@ -26,10 +26,10 @@
 package com.sumologic.log4j.aggregation;
 
 import com.sumologic.log4j.queue.BufferWithEviction;
+
 import org.apache.log4j.helpers.LogLog;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -61,6 +61,7 @@ public abstract class BufferFlushingTask<In, Out> implements Runnable {
                     messageQueue.size()));
             Out body = aggregate(messages);
             sendOut(body, getName());
+            timeOfLastFlush = System.currentTimeMillis();
         }
     }
 

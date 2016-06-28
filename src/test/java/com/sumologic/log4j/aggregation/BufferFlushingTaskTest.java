@@ -27,6 +27,8 @@ package com.sumologic.log4j.aggregation;
 
 import com.sumologic.log4j.queue.BufferWithFifoEviction;
 import com.sumologic.log4j.queue.CostBoundedConcurrentQueue;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author: Jose Muniz (jose@sumologic.com)
@@ -48,23 +51,84 @@ public class BufferFlushingTaskTest {
             }
     };
 
+    private List<List<String>> tasks;
+    private BufferWithFifoEviction<String> queue;
+
+    @Before
+    public void setUp() {
+        tasks = new ArrayList<List<String>>();
+        queue = new BufferWithFifoEviction<String>(1000, sizeElements);
+    }
+
     @Test
     public void testFlushBySize() throws Exception {
-        final List<List<String>> tasks = new ArrayList<List<String>>();
-
-        BufferWithFifoEviction<String> queue =
-                new BufferWithFifoEviction<String>(1000, sizeElements);
         BufferFlushingTask<String, List<String>> task =
-                new BufferFlushingTask<String, List<String>>(queue) {
+                createTask(Integer.MAX_VALUE, 3);
+
+        task.run();
+        assertTrue(tasks.isEmpty());
+        queue.add("msg1");
+        queue.add("msg2");
+
+        task.run();
+        assertTrue(tasks.isEmpty());
+        queue.add("msg3");
+
+        task.run();
+        assertEquals(1, tasks.size());
+        List<String> aggregatedResult = tasks.get(0);
+        assertEquals(3, aggregatedResult.size());
+        assertEquals(Arrays.asList("msg1", "msg2", "msg3"), aggregatedResult);
+    }
+
+    @Test
+    public void testFlushByDate_Immediate() throws Exception {
+        BufferFlushingTask<String, List<String>> task =
+                createTask(-1, Integer.MAX_VALUE);
+
+        task.run();
+        assertTrue(tasks.isEmpty());
+
+        queue.add("msg1");
+        queue.add("msg2");
+        task.run();
+        assertEquals(1, tasks.size());
+
+        queue.add("msg3");
+        task.run();
+        assertEquals(2, tasks.size());
+
+        List<String> aggregatedResult = tasks.get(0);
+        assertEquals(2, aggregatedResult.size());
+        assertEquals(Arrays.asList("msg1", "msg2"), aggregatedResult);
+    }
+
+    @Test
+    public void testFlushByDate_LongInterval() throws Exception {
+        BufferFlushingTask<String, List<String>> task =
+                createTask(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        task.run();
+        assertTrue(tasks.isEmpty());
+        queue.add("msg1");
+        queue.add("msg2");
+
+        task.run();
+        assertTrue(tasks.isEmpty());
+    }
+
+    private BufferFlushingTask<String, List<String>> createTask(
+            final long maxFlushInterval, final long messagesPerRequest) {
+
+        return new BufferFlushingTask<String, List<String>>(queue) {
 
             @Override
             protected long getMaxFlushInterval() {
-                return Integer.MAX_VALUE;
+                return maxFlushInterval;
             }
 
             @Override
             protected long getMessagesPerRequest() {
-                return 3;
+                return messagesPerRequest;
             }
 
             @Override
@@ -82,27 +146,5 @@ public class BufferFlushingTaskTest {
                 tasks.add(body);
             }
         };
-
-        task.run();
-        assertEquals(true, tasks.isEmpty());
-        queue.add("msg1");
-        queue.add("msg2");
-
-        task.run();
-        assertEquals(true, tasks.isEmpty());
-        queue.add("msg3");
-
-        task.run();
-        assertEquals(1, tasks.size());
-        List<String> aggregatedResult = tasks.get(0);
-        assertEquals(aggregatedResult.size(), 3);
-        assertEquals(aggregatedResult, Arrays.asList("msg1", "msg2", "msg3"));
-
-    }
-
-
-    @Test
-    public void testFlushByDate() throws Exception {
-
     }
 }
