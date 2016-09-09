@@ -1,12 +1,22 @@
-sumo-log4j-appender
-===================
+# sumo-log4j-appender
 
 A Log4J appender that sends straight to Sumo Logic.
 
 Note: We are actively developing a Sumo Logic Appender that is compatible with Log4J2. If that is of interest to you, please add your vote here:  https://sumologic.aha.io/ideas/ideas/SL-I-2219 
 
-Usage
------
+## Installation
+
+The library can be added to your project using Maven Central by adding the following dependency to a POM file:
+
+```
+<dependency>
+    <groupId>com.sumologic.plugins.log4j</groupId>
+    <artifactId>sumo-log4j-appender</artifactId>
+    <version>2.4</version>
+</dependency>
+```
+
+## Usage
 
 Here is a sample log4.properties file. Make sure to replace [collector-url] with the URL from the Sumo Logic UI.
 
@@ -25,6 +35,7 @@ Here is a sample log4.properties file. Make sure to replace [collector-url] with
     log4j.appender.sumo.proxyPassword=<YOUR_PASSWORD>
     log4j.appender.sumo.proxyDomain=<YOUR_NTLM_DOMAIN>
 
+## Building
 
 To build:
 - Run "mvn clean package" on the pom.xml in the main level of this project.
@@ -57,4 +68,7 @@ To run this as a stand alone Java application:
 then run: "java -cp target/uber-sumo-log4j-appender-1.0-SNAPSHOT.jar com.sumologic.log4j.SumoLogicAppenderExample" to see it in action. 
 
 To run this as web application make sure the log4j.properties file is in the classpath. In many cases you will want it in your "WEB-INF/lib" folder.
- 
+
+## License
+
+The Sumo Logic client library is published under the Apache Software License, Version 2.0. Please visit http://www.apache.org/licenses/LICENSE-2.0.txt for details.
