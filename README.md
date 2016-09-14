@@ -2,7 +2,7 @@
 
 A Log4J appender that sends straight to Sumo Logic.
 
-Note: We are actively developing a Sumo Logic Appender that is compatible with Log4J2. If that is of interest to you, please add your vote here:  https://sumologic.aha.io/ideas/ideas/SL-I-2219 
+Note: For the Log4J 2 appender, please see https://github.com/SumoLogic/sumologic-log4j2-appender
 
 ## Installation
 
