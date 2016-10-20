@@ -18,7 +18,15 @@ The library can be added to your project using Maven Central by adding the follo
 
 ## Usage
 
-Here is a sample log4.properties file. Make sure to replace [collector-url] with the URL from the Sumo Logic UI.
+### Set up HTTP Hosted Collector Source in Sumo Logic
+
+Follow these instructions for [setting up an HTTP Source](http://help.sumologic.com/Send_Data/Sources/HTTP_Source) in Sumo Logic.
+
+### Log4J XML Configuration
+
+Be sure to replace the `url` field with the URL after creating an HTTP Hosted Collector Source in Sumo Logic.
+
+`log4.properties`:
 
     # Root logger option
     log4j.rootLogger=INFO, sumo
@@ -28,12 +36,26 @@ Here is a sample log4.properties file. Make sure to replace [collector-url] with
     log4j.appender.sumo.layout=org.apache.log4j.PatternLayout
     log4j.appender.sumo.layout.ConversionPattern=%d{DATE} %5p %c{1}:%L - %m%n
     log4j.appender.sumo.url=<YOUR_URL_HERE>
+    # Optional parameters for Proxy servers
     log4j.appender.sumo.proxyAuth=<YOUR AUTHTYPE: basic or ntlm>
     log4j.appender.sumo.proxyHost=<YOUR HOSTNAME>
     log4j.appender.sumo.proxyPort=<YOUR PORT>
     log4j.appender.sumo.proxyUser=<YOUR_USERNAME>
     log4j.appender.sumo.proxyPassword=<YOUR_PASSWORD>
     log4j.appender.sumo.proxyDomain=<YOUR_NTLM_DOMAIN>
+
+
+### Parameters
+
+| Parameter          | Required? | Default Value | Description                                                                                                                                |
+|--------------------|----------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| url                | Yes      |               | HTTP collection endpoint URL                                                                                                               |
+| proxyHost          | No       |               | Proxy host IP address                                                                                                                      |
+| proxyPort          | No       |               | Proxy host port number                                                                                                                     |
+| proxyAuth          | No       |               | For basic authentication proxy, set to "basic". For NTLM authentication proxy, set to "ntlm". For no authentication proxy, do not specify. |
+| proxyUser          | No       |               | Proxy host username for basic and NTLM authentication. For no authentication proxy, do not specify.                                        |
+| proxyPassword      | No       |               | Proxy host password for basic and NTLM authentication. For no authentication proxy, do not specify.                                        |
+| proxyDomain        | No       |               | Proxy host domain name for NTLM authentication only
 
 ## Building
 
