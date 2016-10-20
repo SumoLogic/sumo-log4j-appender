@@ -26,7 +26,7 @@ Follow these instructions for [setting up an HTTP Source](http://help.sumologic.
 
 Be sure to replace the `url` field with the URL after creating an HTTP Hosted Collector Source in Sumo Logic.
 
-`log4.properties`:
+`log4j.properties`:
 
     # Root logger option
     log4j.rootLogger=INFO, sumo
