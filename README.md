@@ -22,7 +22,7 @@ The library can be added to your project using Maven Central by adding the follo
 
 Follow these instructions for [setting up an HTTP Source](http://help.sumologic.com/Send_Data/Sources/HTTP_Source) in Sumo Logic.
 
-### Log4J XML Configuration
+### Log4J Configuration
 
 Be sure to replace the `url` field with the URL after creating an HTTP Hosted Collector Source in Sumo Logic.
 
