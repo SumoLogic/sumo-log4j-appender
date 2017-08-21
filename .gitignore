@@ -1,18 +1,13 @@
-*.class
-*.log
-
-.classpath
-.project
-.settings/
-
-# sbt specific
-dist/*
-target/
-lib_managed/
-src_managed/
-project/boot/
-project/plugins/project/
-
-# Scala-IDE specific
-.scala_dependencies
+*.bak
 *.iml
+*.ipr
+*.iws
+*.log
+*.pyc
+.DS_Store
+.classpath
+.pull.exitcode
+.pull.out
+.surefire-*
+.idea
+target

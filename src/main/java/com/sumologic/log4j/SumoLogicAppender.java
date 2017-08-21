@@ -23,19 +23,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.sumologic.log4j;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
+import com.sumologic.log4j.aggregation.SumoBufferFlusher;
+import com.sumologic.log4j.http.ProxySettings;
+import com.sumologic.log4j.http.SumoHttpSender;
+import com.sumologic.log4j.queue.BufferWithEviction;
+import com.sumologic.log4j.queue.BufferWithFifoEviction;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Layout;
 import org.apache.log4j.helpers.LogLog;
@@ -43,97 +38,220 @@ import org.apache.log4j.spi.LoggingEvent;
 
 import java.io.IOException;
 
-/**
- * Appender that sends log messages to Sumo Logic.
- *
- * @author Stefan Zier (stefan@sumologic.com)
- */
+import static com.sumologic.log4j.queue.CostBoundedConcurrentQueue.CostAssigner;
+
 public class SumoLogicAppender extends AppenderSkeleton {
 
-  private String url = null;
-  private int connectionTimeout = 1000;
-  private int socketTimeout = 60000;
+    private String url = null;
 
-  private HttpClient httpClient = null;
+    private String proxyHost = null;
+    private int proxyPort = -1;
+    private String proxyAuth = null;
+    private String proxyUser = null;
+    private String proxyPassword = null;
+    private String proxyDomain = null;
 
-  public void setUrl(String url) {
-    this.url = url;
-  }
 
-  public void setConnectionTimeout(int connectionTimeout) {
-    this.connectionTimeout = connectionTimeout;
-  }
+    private int connectionTimeout = 1000;
+    private int socketTimeout = 60000;
+    private int retryInterval = 10000;        // Once a request fails, how often until we retry.
 
-  public void setSocketTimeout(int socketTimeout) {
-    this.socketTimeout = socketTimeout;
-  }
+    private long messagesPerRequest = 100;    // How many messages need to be in the queue before we flush
+    private long maxFlushInterval = 10000;    // Maximum interval between flushes (ms)
+    private long flushingAccuracy = 250;      // How often the flushed thread looks into the message queue (ms)
+    private String sourceName = "Log4J-SumoObject"; // Name to stamp for querying with _sourceName
 
-  @Override
-  public void activateOptions() {
-    HttpParams params = new BasicHttpParams();
-    HttpConnectionParams.setConnectionTimeout(params, connectionTimeout);
-    HttpConnectionParams.setSoTimeout(params, socketTimeout);
-    httpClient = new DefaultHttpClient(new ThreadSafeClientConnManager(), params);
-  }
+    private long maxQueueSizeBytes = 1000000;
 
-  @Override
-  protected void append(LoggingEvent event) {
-    if (!checkEntryConditions()) {
-      return;
+    private SumoHttpSender sender;
+    private SumoBufferFlusher flusher;
+    volatile private BufferWithEviction<String> queue;
+
+    /* All the parameters */
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    StringBuilder builder = new StringBuilder(1024);
-    builder.append(layout.format(event));
-    if (layout.ignoresThrowable()) {
-      String[] throwableStrRep = event.getThrowableStrRep();
-      if (throwableStrRep != null) {
-        for (String line : throwableStrRep) {
-          builder.append(line);
-          builder.append(Layout.LINE_SEP);
+    public void setMaxQueueSizeBytes(long maxQueueSizeBytes) {
+        this.maxQueueSizeBytes = maxQueueSizeBytes;
+    }
+
+    public void setMessagesPerRequest(long messagesPerRequest) {
+        this.messagesPerRequest = messagesPerRequest;
+    }
+
+
+    public void setMaxFlushInterval(long maxFlushInterval) {
+        this.maxFlushInterval = maxFlushInterval;
+    }
+
+    public void setSourceName(String sourceName) {
+        this.sourceName = sourceName;
+    }
+
+    public void setFlushingAccuracy(long flushingAccuracy) {
+        this.flushingAccuracy = flushingAccuracy;
+    }
+
+    public void setConnectionTimeout(int connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    public void setSocketTimeout(int socketTimeout) {
+        this.socketTimeout = socketTimeout;
+    }
+
+    public void setRetryInterval(int retryInterval) {
+        this.retryInterval = retryInterval;
+    }
+
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
+    }
+
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
+    }
+
+    public String getProxyAuth() {
+        return proxyAuth;
+    }
+
+    public void setProxyAuth(String proxyAuth) {
+        this.proxyAuth = proxyAuth;
+    }
+
+    public String getProxyUser() {
+        return proxyUser;
+    }
+
+    public void setProxyUser(String proxyUser) {
+        this.proxyUser = proxyUser;
+    }
+
+    public String getProxyPassword() {
+        return proxyPassword;
+    }
+
+    public void setProxyPassword(String proxyPassword) {
+        this.proxyPassword = proxyPassword;
+    }
+
+    public String getProxyDomain() {
+        return proxyDomain;
+    }
+
+    public void setProxyDomain(String proxyDomain) {
+        this.proxyDomain = proxyDomain;
+    }
+
+    @Override
+    public void activateOptions() {
+        LogLog.debug("Activating options");
+
+        /* Initialize queue */
+        if (queue == null) {
+            queue = new BufferWithFifoEviction<String>(maxQueueSizeBytes, new CostAssigner<String>() {
+                @Override
+                public long cost(String e) {
+                    // Note: This is only an estimate for total byte usage, since in UTF-8 encoding,
+                    // the size of one character may be > 1 byte.
+                    return e.length();
+                }
+            });
+        } else {
+            queue.setCapacity(maxQueueSizeBytes);
         }
-      }
+
+        /* Initialize sender */
+        if (sender == null)
+            sender = new SumoHttpSender();
+
+        sender.setRetryInterval(retryInterval);
+        sender.setConnectionTimeout(connectionTimeout);
+        sender.setSocketTimeout(socketTimeout);
+        sender.setUrl(url);
+        sender.setProxySettings(new ProxySettings(
+                proxyHost,
+                proxyPort,
+                proxyAuth,
+                proxyUser,
+                proxyPassword,
+                proxyDomain));
+
+        sender.init();
+
+        /* Initialize flusher  */
+        if (flusher != null)
+            flusher.stop();
+
+        flusher = new SumoBufferFlusher(flushingAccuracy,
+                messagesPerRequest,
+                maxFlushInterval,
+                sourceName,
+                sender,
+                queue);
+        flusher.start();
+
     }
 
-    sendToSumo(builder.toString());
-  }
+    @Override
+    protected void append(LoggingEvent event) {
+        if (!checkEntryConditions()) {
+            LogLog.warn("Appender not initialized. Dropping log entry");
+            return;
+        }
 
-  @Override
-  public void close() {
-    httpClient.getConnectionManager().shutdown();
-    httpClient = null;
-  }
+        StringBuilder builder = new StringBuilder(1024);
+        builder.append(layout.format(event));
+        if (layout.ignoresThrowable()) {
+            String[] throwableStrRep = event.getThrowableStrRep();
+            if (throwableStrRep != null) {
+                for (String line : throwableStrRep) {
+                    builder.append(line);
+                    builder.append(Layout.LINE_SEP);
+                }
+            }
+        }
 
-  @Override
-  public boolean requiresLayout() {
-    return true;
-  }
-
-  // Private bits.
-
-  private boolean checkEntryConditions() {
-    if (httpClient == null) {
-      LogLog.warn("HttpClient not initialized.");
-      return false;
+        try {
+            queue.add(builder.toString());
+        } catch (Exception e) {
+            LogLog.error("Unable to insert log entry into log queue. ", e);
+        }
     }
 
-    return true;
-  }
+    @Override
+    public void close() {
+        try {
+            sender.close();
+            sender = null;
 
-  private void sendToSumo(String log) {
-    HttpPost post = null;
-    try {
-      post = new HttpPost(url);
-      post.setEntity(new StringEntity(log, HTTP.PLAIN_TEXT_TYPE, HTTP.UTF_8));
-      HttpResponse response = httpClient.execute(post);
-      int statusCode = response.getStatusLine().getStatusCode();
-      if (statusCode != 200) {
-        LogLog.warn(String.format("Received HTTP error from Sumo Service: %d", statusCode));
-      }
-      //need to consume the body if you want to re-use the connection.
-      EntityUtils.consume(response.getEntity());
-    } catch (IOException e) {
-      LogLog.warn("Could not send log to Sumo Logic", e);
-      try { post.abort(); } catch (Exception ignore) {}
+            flusher.stop();
+            flusher = null;
+        } catch (IOException e) {
+            LogLog.error("Unable to close appender", e);
+        }
     }
-  }
+
+    @Override
+    public boolean requiresLayout() {
+        return true;
+    }
+
+    // Private bits.
+
+    private boolean checkEntryConditions() {
+        return sender != null && sender.isInitialized();
+    }
+
 }
