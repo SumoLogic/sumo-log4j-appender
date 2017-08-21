@@ -83,14 +83,6 @@ To build:
 		</plugins>
 	</build>
 
-To run this as a stand alone Java application:
-- create a Java main, follow "com.sumologic.log4j.SumoLogicAppenderExample".
-- place the log4j.properties file under "/src/main/resources/"
-- if you created a main called "com.sumologic.log4j.SumoLogicAppenderExample", 
-then run: "java -cp target/uber-sumo-log4j-appender-1.0-SNAPSHOT.jar com.sumologic.log4j.SumoLogicAppenderExample" to see it in action. 
-
-To run this as web application make sure the log4j.properties file is in the classpath. In many cases you will want it in your "WEB-INF/lib" folder.
-
 ## License
 
 The Sumo Logic client library is published under the Apache Software License, Version 2.0. Please visit http://www.apache.org/licenses/LICENSE-2.0.txt for details.
