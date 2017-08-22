@@ -39,14 +39,9 @@ public class SumoBufferFlushingTask extends BufferFlushingTask<String, String> {
     private SumoHttpSender sender;
     private long maxFlushInterval;
     private long messagesPerRequest;
-    private String name;
 
     public SumoBufferFlushingTask(BufferWithEviction<String> queue) {
         super(queue);
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public void setSender(SumoHttpSender sender) {
@@ -72,11 +67,6 @@ public class SumoBufferFlushingTask extends BufferFlushingTask<String, String> {
     }
 
     @Override
-    protected String getName() {
-        return name;
-    }
-
-    @Override
     protected String aggregate(List<String> messages) {
         StringBuilder builder = new StringBuilder(messages.size() * 10);
         for (String message: messages) {
@@ -86,9 +76,9 @@ public class SumoBufferFlushingTask extends BufferFlushingTask<String, String> {
     }
 
     @Override
-    protected void sendOut(String body, String name) {
+    protected void sendOut(String body) {
         if (sender != null && sender.isInitialized()) {
-            sender.send(body, name);
+            sender.send(body);
         } else {
             LogLog.error("HTTPSender is not initialized");
         }

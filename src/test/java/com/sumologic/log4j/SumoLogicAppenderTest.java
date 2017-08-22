@@ -59,6 +59,12 @@ public class SumoLogicAppenderTest {
     }
 
     private void setUpLogger(int batchSize, int windowSize, int precision) {
+        setUpLoggerWithOverrides(batchSize, windowSize, precision, null, null, null);
+    }
+
+    private void setUpLoggerWithOverrides(int batchSize, int windowSize, int precision,
+        String sourceName, String sourceHost, String sourceCategory) {
+
         LogLog.setInternalDebugging(true);
 
         appender = new SumoLogicAppender();
@@ -66,12 +72,20 @@ public class SumoLogicAppenderTest {
         appender.setMessagesPerRequest(batchSize);
         appender.setMaxFlushInterval(windowSize);
         appender.setFlushingAccuracy(precision);
+        if (sourceName != null) {
+            appender.setSourceName(sourceName);
+        }
+        if (sourceHost != null) {
+            appender.setSourceHost(sourceHost);
+        }
+        if (sourceCategory != null) {
+            appender.setSourceCategory(sourceCategory);
+        }
 
         // TODO: Shouldn't there be a default layout?
         appender.setLayout(new PatternLayout("%m%n"));
         setUpLogger(appender);
         appender.activateOptions();
-
     }
 
 
@@ -193,5 +207,37 @@ public class SumoLogicAppenderTest {
 
     }
 
+    @Test
+    public void testMetadata() throws Exception {
+        setUpLoggerWithOverrides(1, 10000, 10,
+                "testSource", "testHost", "testCategory");
+
+        loggerInTest.info("This is a message");
+
+        Thread.sleep(100);
+        assertEquals(handler.getExchanges().size(), 1);
+        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Name"),
+                "testSource");
+        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Host"),
+                "testHost");
+        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Category"),
+                "testCategory");
+    }
+
+    @Test
+    public void testPartialMetadata() throws Exception {
+        setUpLoggerWithOverrides(1, 10000, 10,
+                "testSource", null, "testCategory");
+
+        loggerInTest.info("This is a message");
+
+        Thread.sleep(100);
+        assertEquals(handler.getExchanges().size(), 1);
+        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Name"),
+                "testSource");
+        assertEquals(handler.getExchanges().get(0).getHeaders().get("X-Sumo-Host"), null);
+        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Category"),
+                "testCategory");
+    }
 
 }

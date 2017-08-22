@@ -59,7 +59,10 @@ public class SumoLogicAppender extends AppenderSkeleton {
     private long messagesPerRequest = 100;    // How many messages need to be in the queue before we flush
     private long maxFlushInterval = 10000;    // Maximum interval between flushes (ms)
     private long flushingAccuracy = 250;      // How often the flushed thread looks into the message queue (ms)
-    private String sourceName = "Log4J-SumoObject"; // Name to stamp for querying with _sourceName
+
+    private String sourceName = null;
+    private String sourceHost = null;
+    private String sourceCategory = null;
 
     private long maxQueueSizeBytes = 1000000;
 
@@ -88,6 +91,14 @@ public class SumoLogicAppender extends AppenderSkeleton {
 
     public void setSourceName(String sourceName) {
         this.sourceName = sourceName;
+    }
+
+    public void setSourceHost(String sourceHost) {
+        this.sourceHost = sourceHost;
+    }
+
+    public void setSourceCategory(String sourceCategory) {
+        this.sourceCategory = sourceCategory;
     }
 
     public void setFlushingAccuracy(long flushingAccuracy) {
@@ -180,6 +191,9 @@ public class SumoLogicAppender extends AppenderSkeleton {
         sender.setConnectionTimeout(connectionTimeout);
         sender.setSocketTimeout(socketTimeout);
         sender.setUrl(url);
+        sender.setSourceHost(sourceHost);
+        sender.setSourceName(sourceName);
+        sender.setSourceCategory(sourceCategory);
         sender.setProxySettings(new ProxySettings(
                 proxyHost,
                 proxyPort,
@@ -197,7 +211,6 @@ public class SumoLogicAppender extends AppenderSkeleton {
         flusher = new SumoBufferFlusher(flushingAccuracy,
                 messagesPerRequest,
                 maxFlushInterval,
-                sourceName,
                 sender,
                 queue);
         flusher.start();
