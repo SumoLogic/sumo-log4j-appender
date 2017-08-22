@@ -60,7 +60,7 @@ public abstract class BufferFlushingTask<In, Out> implements Runnable {
                     messages.size(),
                     messageQueue.size()));
             Out body = aggregate(messages);
-            sendOut(body, getName());
+            sendOut(body);
             timeOfLastFlush = System.currentTimeMillis();
         }
     }
@@ -70,7 +70,6 @@ public abstract class BufferFlushingTask<In, Out> implements Runnable {
 
     abstract protected long getMaxFlushInterval();
     abstract protected long getMessagesPerRequest();
-    abstract protected String getName();
 
     protected BufferFlushingTask(BufferWithEviction<In> messageQueue) {
         this.messageQueue = messageQueue;
@@ -79,7 +78,7 @@ public abstract class BufferFlushingTask<In, Out> implements Runnable {
     // Given the list of messages, aggregate them into a single Out object
     abstract protected Out aggregate(List<In> messages);
     // Send aggregated message out. Block until we've successfully sent it.
-    abstract protected void sendOut(Out body, String name);
+    abstract protected void sendOut(Out body);
 
 
 

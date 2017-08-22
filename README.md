@@ -12,7 +12,7 @@ The library can be added to your project using Maven Central by adding the follo
 <dependency>
     <groupId>com.sumologic.plugins.log4j</groupId>
     <artifactId>sumo-log4j-appender</artifactId>
-    <version>2.4</version>
+    <version>2.5</version>
 </dependency>
 ```
 
@@ -34,8 +34,14 @@ Be sure to replace the `url` field with the URL after creating an HTTP Hosted Co
     # Direct log messages to sumo
     log4j.appender.sumo=com.sumologic.log4j.SumoLogicAppender
     log4j.appender.sumo.layout=org.apache.log4j.PatternLayout
-    log4j.appender.sumo.layout.ConversionPattern=%d{DATE} %5p %c{1}:%L - %m%n
+    log4j.appender.sumo.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss,SSS Z} [%t] %-5p %c - %m%n
     log4j.appender.sumo.url=<YOUR_URL_HERE>
+
+    # Optional parameters for Metadata
+    log4j.appender.sumo.sourceName=<YOUR SOURCE NAME>
+    log4j.appender.sumo.sourceHost=<YOUR SOURCE HOST>
+    log4j.appender.sumo.sourceCategory=<YOUR SOURCE CATEGORY>
+
     # Optional parameters for Proxy servers
     log4j.appender.sumo.proxyAuth=<YOUR AUTHTYPE: basic or ntlm>
     log4j.appender.sumo.proxyHost=<YOUR HOSTNAME>
@@ -50,6 +56,9 @@ Be sure to replace the `url` field with the URL after creating an HTTP Hosted Co
 | Parameter          | Required? | Default Value | Description                                                                                                                                |
 |--------------------|----------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------|
 | url                | Yes      |               | HTTP collection endpoint URL                                                                                                               |
+| sourceName         | No       | "Http Input"              | Source name to appear when searching on Sumo Logic by `_sourceName`
+| sourceHost         | No       | Client IP Address              | Source host to appear when searching on Sumo Logic by `sourceHost`
+| sourceCategory     | No       | "Http Input"              | Source category to appear when searching on Sumo Logic by _`sourceCategory`
 | proxyHost          | No       |               | Proxy host IP address                                                                                                                      |
 | proxyPort          | No       |               | Proxy host port number                                                                                                                     |
 | proxyAuth          | No       |               | For basic authentication proxy, set to "basic". For NTLM authentication proxy, set to "ntlm". For no authentication proxy, do not specify. |
