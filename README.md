@@ -70,27 +70,22 @@ Be sure to replace the `url` field with the URL after creating an HTTP Hosted Co
 
 To build:
 - Run "mvn clean package" on the pom.xml in the main level of this project.
-- The pom is packaging all of the dependent JAR files into one massive jar file called "uber-sumo-log4j-appender-1.0-SNAPSHOT.jar". If you do not want all of this, remove the following XML from the pom.xml file:
+- To test running a locally built JAR file, you may need to manually add the following dependencies to your project:
+```
+    <dependencies>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
 
-	<build>
-		<plugins>
-			<plugin>
-			    <groupId>org.apache.maven.plugins</groupId>
-			    <artifactId>maven-shade-plugin</artifactId>
-			    <executions>
-			        <execution>
-			            <phase>package</phase>
-			            <goals>
-			                <goal>shade</goal>
-			            </goals>
-			        </execution>
-			    </executions>
-			    <configuration>
-			        <finalName>uber-${artifactId}-${version}</finalName>
-			    </configuration>
-			</plugin>
-		</plugins>
-	</build>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.2</version>
+        </dependency>
+    </dependencies>
+```
 
 ## License
 
