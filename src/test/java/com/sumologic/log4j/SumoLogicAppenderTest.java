@@ -240,4 +240,15 @@ public class SumoLogicAppenderTest {
                 "testCategory");
     }
 
+    @Test
+    public void testClientHeader() throws Exception {
+        setUpLoggerWithOverrides(1, 10000, 10,
+                "testSource", "testHost", "testCategory");
+
+        loggerInTest.info("This is a message");
+        Thread.sleep(100);
+        assertEquals(handler.getExchanges().size(), 1);
+        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Client"),
+                "log4j-appender");
+    }
 }
