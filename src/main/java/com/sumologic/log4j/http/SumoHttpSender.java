@@ -47,6 +47,9 @@ public class SumoHttpSender {
     private static final String SUMO_SOURCE_NAME_HEADER = "X-Sumo-Name";
     private static final String SUMO_SOURCE_CATEGORY_HEADER = "X-Sumo-Category";
     private static final String SUMO_SOURCE_HOST_HEADER = "X-Sumo-Host";
+    private static final String SUMO_CLIENT_HEADER = "X-Sumo-Client";
+
+    private static final String SUMO_CLIENT_HEADER_VALUE = "log4j-appender";
 
     private long retryInterval = 10000L;
 
@@ -151,6 +154,7 @@ public class SumoHttpSender {
             safeSetHeader(post, SUMO_SOURCE_NAME_HEADER, sourceName);
             safeSetHeader(post, SUMO_SOURCE_CATEGORY_HEADER, sourceCategory);
             safeSetHeader(post, SUMO_SOURCE_HOST_HEADER, sourceHost);
+            safeSetHeader(post, SUMO_CLIENT_HEADER, SUMO_CLIENT_HEADER_VALUE);
             post.setEntity(new StringEntity(body, Consts.UTF_8));
             HttpResponse response = httpClient.execute(post);
             int statusCode = response.getStatusLine().getStatusCode();
