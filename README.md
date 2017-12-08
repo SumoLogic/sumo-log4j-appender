@@ -12,7 +12,7 @@ The library can be added to your project using Maven Central by adding the follo
 <dependency>
     <groupId>com.sumologic.plugins.log4j</groupId>
     <artifactId>sumo-log4j-appender</artifactId>
-    <version>2.5</version>
+    <version>2.6</version>
 </dependency>
 ```
 
