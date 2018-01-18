@@ -59,7 +59,7 @@ Alternatively you can use XML configuration to configure the Sumo Logic Log4j ap
 
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 
-    <appender name="sumo" class="com.sumologic.log4j.BufferedSumoLogicAppender">
+    <appender name="sumo" class="com.sumologic.log4j.SumoLogicAppender">
         <param name="Threshold" value="INFO"/>
         <param name="url" value="<YOUR_URL_HERE>"/>
         <layout class="org.apache.log4j.PatternLayout">
