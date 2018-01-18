@@ -50,6 +50,30 @@ Be sure to replace the `url` field with the URL after creating an HTTP Hosted Co
     log4j.appender.sumo.proxyPassword=<YOUR_PASSWORD>
     log4j.appender.sumo.proxyDomain=<YOUR_NTLM_DOMAIN>
 
+Alternatively you can use XML configuration to configure the Sumo Logic Log4j appender:
+
+`log4j.xml`:
+```
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+    <appender name="sumo" class="com.sumologic.log4j.BufferedSumoLogicAppender">
+        <param name="Threshold" value="INFO"/>
+        <param name="url" value="<YOUR_URL_HERE>"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss,SSS Z} [%t] %-5p %c - %m%n"/>
+        </layout>
+    </appender>
+
+    <root>
+        <priority value="INFO"/>
+        <appender-ref ref="sumo"/>
+    </root>
+
+</log4j:configuration>
+```
 
 ### Parameters
 
