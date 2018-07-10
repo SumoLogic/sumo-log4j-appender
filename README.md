@@ -93,6 +93,7 @@ Alternatively you can use XML configuration to configure the Sumo Logic Log4j ap
 | proxyUser          | No       |               | Proxy host username for basic and NTLM authentication. For no authentication proxy, do not specify.                                        |
 | proxyPassword      | No       |               | Proxy host password for basic and NTLM authentication. For no authentication proxy, do not specify.                                        |
 | proxyDomain        | No       |               | Proxy host domain name for NTLM authentication only
+| flushAllBeforeStopping        | No       | false              | Flush all messages before stopping regardless of flushingAccuracy. Be sure to call `LogManager.shutdown();` when your application stops.
 
 ## Building
 
