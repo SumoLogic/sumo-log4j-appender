@@ -55,6 +55,7 @@ public class SumoLogicAppender extends AppenderSkeleton {
     private int connectionTimeout = 1000;
     private int socketTimeout = 60000;
     private int retryInterval = 10000;        // Once a request fails, how often until we retry.
+    private boolean flushAllBeforeStopping = false; // When true, perform a final flush on shutdown
 
     private long messagesPerRequest = 100;    // How many messages need to be in the queue before we flush
     private long maxFlushInterval = 10000;    // Maximum interval between flushes (ms)
@@ -165,6 +166,14 @@ public class SumoLogicAppender extends AppenderSkeleton {
         this.proxyDomain = proxyDomain;
     }
 
+    public boolean getFlushAllBeforeStopping() {
+        return flushAllBeforeStopping;
+    }
+
+    public void setFlushAllBeforeStopping(boolean flushAllBeforeStopping) {
+        this.flushAllBeforeStopping = flushAllBeforeStopping;
+    }
+
     @Override
     public void activateOptions() {
         LogLog.debug("Activating options");
@@ -212,7 +221,8 @@ public class SumoLogicAppender extends AppenderSkeleton {
                 messagesPerRequest,
                 maxFlushInterval,
                 sender,
-                queue);
+                queue,
+                flushAllBeforeStopping);
         flusher.start();
 
     }
@@ -245,12 +255,13 @@ public class SumoLogicAppender extends AppenderSkeleton {
 
     @Override
     public void close() {
+        LogLog.debug("Closing SumoLogicAppender : " + getName());
         try {
-            sender.close();
-            sender = null;
-
             flusher.stop();
             flusher = null;
+
+            sender.close();
+            sender = null;
         } catch (IOException e) {
             LogLog.error("Unable to close appender", e);
         }
