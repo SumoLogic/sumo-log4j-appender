@@ -37,9 +37,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * @author: Jose Muniz (jose@sumologic.com)
- */
 public class SumoLogicAppenderTest {
 
     private static final int PORT = 10010;
@@ -58,16 +55,21 @@ public class SumoLogicAppenderTest {
 
     }
 
-    private void setUpLogger(int batchSize, int windowSize, int precision) {
-        setUpLoggerWithOverrides(batchSize, windowSize, precision, null, null, null);
+    private void setUpLogger(int batchSize, int windowSize, int precision, boolean useLegacy) {
+        setUpLoggerWithOverrides(batchSize, windowSize, precision,
+                null, null, null, useLegacy);
     }
 
     private void setUpLoggerWithOverrides(int batchSize, int windowSize, int precision,
-        String sourceName, String sourceHost, String sourceCategory) {
+        String sourceName, String sourceHost, String sourceCategory, boolean useLegacy) {
 
         LogLog.setInternalDebugging(true);
 
-        appender = new SumoLogicAppender();
+        if (useLegacy) {
+            appender = new BufferedSumoLogicAppender();
+        } else {
+            appender = new SumoLogicAppender();
+        }
         appender.setUrl(ENDPOINT_URL);
         appender.setMessagesPerRequest(batchSize);
         appender.setMaxFlushInterval(windowSize);
@@ -81,9 +83,7 @@ public class SumoLogicAppenderTest {
         if (sourceCategory != null) {
             appender.setSourceCategory(sourceCategory);
         }
-
-        // TODO: Shouldn't there be a default layout?
-        appender.setLayout(new PatternLayout("%m%n"));
+        appender.setLayout(new PatternLayout("%d{yyyy-MM-dd HH:mm:ss,SSS Z} [%t] %-5p %c - %m%n"));
         setUpLogger(appender);
         appender.activateOptions();
     }
@@ -93,7 +93,6 @@ public class SumoLogicAppenderTest {
     public void setUp() throws Exception {
         handler = new AggregatingHttpHandler();
         server = new MockHttpServer(PORT, handler);
-
         server.start();
     }
 
@@ -106,149 +105,77 @@ public class SumoLogicAppenderTest {
     }
 
     @Test
-    public void testSingleMessage() throws Exception {
-        setUpLogger(1, 10000, 10);
-
-        loggerInTest.info("This is a message");
-
-        Thread.sleep(100);
-        assertEquals(handler.getExchanges().size(), 1);
-        assertEquals(handler.getExchanges().get(0).getBody(), "This is a message\n");
+    public void testLegacy() throws Exception {
+        setUpLoggerWithOverrides(1000, 100, 10,
+                "mySource", "myHost", "myCategory", true);
+        String message = "Test log message";
+        loggerInTest.info(message);
+        Thread.sleep(150);
+        // Check headers
+        for(MaterializedHttpRequest request: handler.getExchanges()) {
+            assertEquals(true, request.getHeaders().getFirst("X-Sumo-Name").equals("mySource"));
+            assertEquals(true, request.getHeaders().getFirst("X-Sumo-Category").equals("myCategory"));
+            assertEquals(true, request.getHeaders().getFirst("X-Sumo-Host").equals("myHost"));
+            assertEquals("log4j-appender", request.getHeaders().getFirst("X-Sumo-Client"));
+        }
+        // Check body
+        StringBuffer actual = new StringBuffer();
+        for(MaterializedHttpRequest request: handler.getExchanges()) {
+            for (String line : request.getBody().split("\n")) {
+                // Strip timestamp
+                int mainStart = line.indexOf("[main]");
+                String trimmed = line.substring(mainStart);
+                actual.append(trimmed + "\n");
+            }
+        }
+        assertEquals("[main] INFO  SumoLogicAppenderTest - Test log message\n", actual.toString());
     }
 
     @Test
-    public void testMultipleMessages() throws Exception {
-        setUpLogger(1, 10000, 1);
+    public void testMessagesWithMetadata() throws Exception {
+        setUpLoggerWithOverrides(1000, 100, 10,
+                "mySource", "myHost", "myCategory", false);
+        StringBuffer expected = new StringBuffer();
+        for (int i = 0; i < 100; i ++) {
+            String message = "info" + i;
+            loggerInTest.info(message);
+            expected.append("[main] INFO  SumoLogicAppenderTest - " + message + "\n");
+        }
+        Thread.sleep(150);
+        // Check headers
+        for(MaterializedHttpRequest request: handler.getExchanges()) {
+            assertEquals(true, request.getHeaders().getFirst("X-Sumo-Name").equals("mySource"));
+            assertEquals(true, request.getHeaders().getFirst("X-Sumo-Category").equals("myCategory"));
+            assertEquals(true, request.getHeaders().getFirst("X-Sumo-Host").equals("myHost"));
+            assertEquals("log4j-appender", request.getHeaders().getFirst("X-Sumo-Client"));
+        }
+        // Check body
+        StringBuffer actual = new StringBuffer();
+        for(MaterializedHttpRequest request: handler.getExchanges()) {
+            for (String line : request.getBody().split("\n")) {
+                // Strip timestamp
+                int mainStart = line.indexOf("[main]");
+                String trimmed = line.substring(mainStart);
+                actual.append(trimmed + "\n");
+            }
+        }
+        assertEquals(expected.toString(), actual.toString());
+    }
 
+    @Test
+    public void testMessagesWithoutMetadata() throws Exception {
+        setUpLogger(1000, 100, 10, false);
         int numMessages = 5;
         for (int i = 0; i < numMessages; i ++) {
             loggerInTest.info("info " + i);
-            Thread.sleep(1500);
+            Thread.sleep(150);
         }
-
         assertEquals(numMessages, handler.getExchanges().size());
-    }
-
-
-    @Test
-    public void testBatchingBySize() throws Exception {
-        // Huge window, ensure all messages get batched into one
-        setUpLogger(100, 10000, 1);
-
-        int numMessages = 100;
-        for (int i = 0; i < numMessages; i ++) {
-            loggerInTest.info("info " + i);
+        for(MaterializedHttpRequest request: handler.getExchanges()) {
+            assertEquals(true, request.getHeaders().getFirst("X-Sumo-Name") == null);
+            assertEquals(true, request.getHeaders().getFirst("X-Sumo-Category") == null);
+            assertEquals(true, request.getHeaders().getFirst("X-Sumo-Host") == null);
+            assertEquals("log4j-appender", request.getHeaders().getFirst("X-Sumo-Client"));
         }
-
-
-        Thread.sleep(2000);
-        assertEquals(handler.getExchanges().size(), 1);
-    }
-
-    @Test
-    public void testBatchingByWindow() throws Exception {
-        // Small window, ensure all messages get batched by time
-        setUpLogger(10000, 500, 1);
-
-        loggerInTest.info("message1");
-        loggerInTest.info("message2");
-        loggerInTest.info("message3");
-        loggerInTest.info("message4");
-        loggerInTest.info("message5");
-
-        Thread.sleep(1520);
-
-        loggerInTest.info("message1");
-        loggerInTest.info("message2");
-        loggerInTest.info("message3");
-        loggerInTest.info("message4");
-        loggerInTest.info("message5");
-
-        Thread.sleep(520);
-
-
-        assertEquals(2, handler.getExchanges().size());
-        MaterializedHttpRequest request1 = handler.getExchanges().get(0);
-        MaterializedHttpRequest request2 = handler.getExchanges().get(1);
-        System.out.println(request1.getBody());
-
-    }
-
-
-    @Test
-    // Start with an appender without its URL set. THEN set the property and
-    // make sure everything's still there.
-    public void testNoUrlSetInitially() throws Exception {
-        LogLog.setInternalDebugging(true);
-
-        appender = new SumoLogicAppender();
-        appender.setMessagesPerRequest(1000);
-        appender.setMaxFlushInterval(100);
-        appender.setFlushingAccuracy(1);
-        appender.setRetryInterval(1);
-
-        // TODO: Shouldn't there be a default layout?
-        appender.setLayout(new PatternLayout("%m%n"));
-        appender.activateOptions();
-
-        setUpLogger(appender);
-
-
-        for (int i = 0; i < 100; i++) {
-            loggerInTest.info("message " + i);
-        }
-
-
-        appender.setUrl(ENDPOINT_URL);
-        appender.activateOptions();
-
-        Thread.sleep(1000);
-        assertEquals(1, handler.getExchanges().size());
-
-    }
-
-    @Test
-    public void testMetadata() throws Exception {
-        setUpLoggerWithOverrides(1, 10000, 10,
-                "testSource", "testHost", "testCategory");
-
-        loggerInTest.info("This is a message");
-
-        Thread.sleep(100);
-        assertEquals(handler.getExchanges().size(), 1);
-        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Name"),
-                "testSource");
-        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Host"),
-                "testHost");
-        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Category"),
-                "testCategory");
-    }
-
-    @Test
-    public void testPartialMetadata() throws Exception {
-        setUpLoggerWithOverrides(1, 10000, 10,
-                "testSource", null, "testCategory");
-
-        loggerInTest.info("This is a message");
-
-        Thread.sleep(100);
-        assertEquals(handler.getExchanges().size(), 1);
-        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Name"),
-                "testSource");
-        assertEquals(handler.getExchanges().get(0).getHeaders().get("X-Sumo-Host"), null);
-        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Category"),
-                "testCategory");
-    }
-
-    @Test
-    public void testClientHeader() throws Exception {
-        setUpLoggerWithOverrides(1, 10000, 10,
-                "testSource", "testHost", "testCategory");
-
-        loggerInTest.info("This is a message");
-        Thread.sleep(100);
-        assertEquals(handler.getExchanges().size(), 1);
-        assertEquals(handler.getExchanges().get(0).getHeaders().getFirst("X-Sumo-Client"),
-                "log4j-appender");
     }
 }

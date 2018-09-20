@@ -26,11 +26,11 @@
 
 package com.sumologic.log4j;
 
-import com.sumologic.log4j.aggregation.SumoBufferFlusher;
-import com.sumologic.log4j.http.ProxySettings;
-import com.sumologic.log4j.http.SumoHttpSender;
-import com.sumologic.log4j.queue.BufferWithEviction;
-import com.sumologic.log4j.queue.BufferWithFifoEviction;
+import com.sumologic.http.aggregation.SumoBufferFlusher;
+import com.sumologic.http.sender.ProxySettings;
+import com.sumologic.http.sender.SumoHttpSender;
+import com.sumologic.http.queue.BufferWithEviction;
+import com.sumologic.http.queue.BufferWithFifoEviction;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Layout;
 import org.apache.log4j.helpers.LogLog;
@@ -38,7 +38,7 @@ import org.apache.log4j.spi.LoggingEvent;
 
 import java.io.IOException;
 
-import static com.sumologic.log4j.queue.CostBoundedConcurrentQueue.CostAssigner;
+import static com.sumologic.http.queue.CostBoundedConcurrentQueue.CostAssigner;
 
 public class SumoLogicAppender extends AppenderSkeleton {
 
@@ -70,6 +70,7 @@ public class SumoLogicAppender extends AppenderSkeleton {
     private SumoHttpSender sender;
     private SumoBufferFlusher flusher;
     volatile private BufferWithEviction<String> queue;
+    private static final String CLIENT_NAME = "log4j-appender";
 
     /* All the parameters */
 
@@ -210,7 +211,7 @@ public class SumoLogicAppender extends AppenderSkeleton {
                 proxyUser,
                 proxyPassword,
                 proxyDomain));
-
+        sender.setClientHeaderValue(CLIENT_NAME);
         sender.init();
 
         /* Initialize flusher  */
