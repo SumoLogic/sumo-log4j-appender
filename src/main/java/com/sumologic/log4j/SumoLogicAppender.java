@@ -72,48 +72,69 @@ public class SumoLogicAppender extends AppenderSkeleton {
     volatile private BufferWithEviction<String> queue;
     private static final String CLIENT_NAME = "log4j-appender";
 
-    /* All the parameters */
+    // All the parameters
+
+    public String getUrl() { return this.url; }
 
     public void setUrl(String url) {
         this.url = url;
     }
 
+    public long getMaxQueueSizeBytes() { return this.maxQueueSizeBytes; }
+
     public void setMaxQueueSizeBytes(long maxQueueSizeBytes) {
         this.maxQueueSizeBytes = maxQueueSizeBytes;
     }
+
+    public long getMessagesPerRequest() { return this.messagesPerRequest; }
 
     public void setMessagesPerRequest(long messagesPerRequest) {
         this.messagesPerRequest = messagesPerRequest;
     }
 
+    public long getMaxFlushInterval() { return this.maxFlushInterval; }
 
     public void setMaxFlushInterval(long maxFlushInterval) {
         this.maxFlushInterval = maxFlushInterval;
     }
 
+    public String getSourceName() { return this.sourceName; }
+
     public void setSourceName(String sourceName) {
         this.sourceName = sourceName;
     }
+
+    public String getSourceHost() { return this.sourceHost; }
 
     public void setSourceHost(String sourceHost) {
         this.sourceHost = sourceHost;
     }
 
+    public String getSourceCategory() { return this.sourceCategory; }
+
     public void setSourceCategory(String sourceCategory) {
         this.sourceCategory = sourceCategory;
     }
+
+    public long getFlushingAccuracy() { return this.flushingAccuracy; }
 
     public void setFlushingAccuracy(long flushingAccuracy) {
         this.flushingAccuracy = flushingAccuracy;
     }
 
+    public int getConnectionTimeout() { return this.connectionTimeout; }
+
     public void setConnectionTimeout(int connectionTimeout) {
         this.connectionTimeout = connectionTimeout;
     }
 
+    public int getSocketTimeout() { return this.socketTimeout; }
+
     public void setSocketTimeout(int socketTimeout) {
         this.socketTimeout = socketTimeout;
     }
+
+    public int getRetryInterval() { return this.retryInterval; }
 
     public void setRetryInterval(int retryInterval) {
         this.retryInterval = retryInterval;
