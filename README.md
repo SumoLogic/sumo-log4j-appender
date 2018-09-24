@@ -1,12 +1,8 @@
 # sumo-log4j-appender
 
-A Log4J appender that sends straight to Sumo Logic.
+A Log4j appender that sends straight to Sumo Logic.
 
-Note: For the Log4J 2 appender, please see https://github.com/SumoLogic/sumologic-log4j2-appender
-
-| TLS Deprecation Notice |
-| --- |
-| In keeping with industry standard security best practices, as of May 31, 2018, the Sumo Logic service will only support TLS version 1.2 going forward. Verify that all connections to Sumo Logic endpoints are made from software that supports TLS 1.2. |
+For the Log4j2 appender, please see https://github.com/SumoLogic/sumologic-log4j2-appender
 
 ## Installation
 
@@ -16,7 +12,7 @@ The library can be added to your project using Maven Central by adding the follo
 <dependency>
     <groupId>com.sumologic.plugins.log4j</groupId>
     <artifactId>sumo-log4j-appender</artifactId>
-    <version>2.8</version>
+    <version>2.10</version>
 </dependency>
 ```
 
@@ -95,7 +91,11 @@ Alternatively you can use XML configuration to configure the Sumo Logic Log4j ap
 | proxyDomain        | No       |               | Proxy host domain name for NTLM authentication only
 | flushAllBeforeStopping        | No       | false              | Flush all messages before stopping regardless of flushingAccuracy. Be sure to call `LogManager.shutdown();` when your application stops.
 
-## Building
+### TLS Support
+
+In keeping with industry standard security best practices, as of May 31, 2018, the Sumo Logic service will only support TLS version 1.2 going forward. Verify that all connections to Sumo Logic endpoints are made from software that supports TLS 1.2.
+
+## Development
 
 To build:
 - Run "mvn clean package" on the pom.xml in the main level of this project.
@@ -118,4 +118,4 @@ To build:
 
 ## License
 
-The Sumo Logic client library is published under the Apache Software License, Version 2.0. Please visit http://www.apache.org/licenses/LICENSE-2.0.txt for details.
+The Sumo Logic Log4j Appender is published under the Apache Software License, Version 2.0. Please visit http://www.apache.org/licenses/LICENSE-2.0.txt for details.
