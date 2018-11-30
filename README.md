@@ -93,9 +93,9 @@ Alternatively you can use XML configuration to configure the Sumo Logic Log4j ap
 | proxyDomain        | No       |               | Proxy host domain name for NTLM authentication only
 | flushAllBeforeStopping        | No       | false              | Flush all messages before stopping regardless of flushingAccuracy. Be sure to call `LogManager.shutdown();` when your application stops.
 
-### TLS Support
+## TLS 1.2 Requirement
 
-In keeping with industry standard security best practices, as of May 31, 2018, the Sumo Logic service will only support TLS version 1.2 going forward. Verify that all connections to Sumo Logic endpoints are made from software that supports TLS 1.2.
+Sumo Logic only accepts connections from clients using TLS version 1.2 or greater. To utilize the content of this repo, ensure that it's running in an execution environment that is configured to use TLS 1.2 or greater.
 
 ## Development
 
