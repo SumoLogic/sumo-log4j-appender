@@ -1,3 +1,6 @@
+[![Build Status](https://api.travis-ci.org/SumoLogic/sumo-log4j-appender.svg?branch=master)](https://travis-ci.org/SumoLogic/sumo-log4j-appender)
+[![codecov.io](https://codecov.io/github/SumoLogic/sumo-log4j-appender/coverage.svg?branch=master)](https://codecov.io/github/SumoLogic/sumo-log4j-appender?branch=master)
+
 # sumo-log4j-appender
 
 A Log4j appender that sends straight to Sumo Logic.
