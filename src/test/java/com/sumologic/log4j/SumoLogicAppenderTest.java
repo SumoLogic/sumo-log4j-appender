@@ -83,6 +83,7 @@ public class SumoLogicAppenderTest {
         if (sourceCategory != null) {
             appender.setSourceCategory(sourceCategory);
         }
+        appender.setFlushAllBeforeStopping(true);
         appender.setLayout(new PatternLayout("%d{yyyy-MM-dd HH:mm:ss,SSS Z} [%t] %-5p %c - %m%n"));
         setUpLogger(appender);
         appender.activateOptions();
@@ -110,7 +111,7 @@ public class SumoLogicAppenderTest {
                 "mySource", "myHost", "myCategory", true);
         String message = "Test log message";
         loggerInTest.info(message);
-        Thread.sleep(150);
+        Thread.sleep(500);
         // Check headers
         for(MaterializedHttpRequest request: handler.getExchanges()) {
             assertEquals(true, request.getHeaders().getFirst("X-Sumo-Name").equals("mySource"));
@@ -141,7 +142,7 @@ public class SumoLogicAppenderTest {
             loggerInTest.info(message);
             expected.append("[main] INFO  SumoLogicAppenderTest - " + message + "\n");
         }
-        Thread.sleep(150);
+        Thread.sleep(500);
         // Check headers
         for(MaterializedHttpRequest request: handler.getExchanges()) {
             assertEquals(true, request.getHeaders().getFirst("X-Sumo-Name").equals("mySource"));
@@ -168,7 +169,7 @@ public class SumoLogicAppenderTest {
         int numMessages = 5;
         for (int i = 0; i < numMessages; i ++) {
             loggerInTest.info("info " + i);
-            Thread.sleep(150);
+            Thread.sleep(500);
         }
         assertEquals(numMessages, handler.getExchanges().size());
         for(MaterializedHttpRequest request: handler.getExchanges()) {
