@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
 
 public class SumoLogicAppenderTest {
 
-    private static final int PORT = 10010;
+    private static final int PORT = 26932;
     private static final String ENDPOINT_URL = "http://localhost:" + PORT;
 
     private MockHttpServer server;
