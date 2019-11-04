@@ -67,6 +67,8 @@ public class SumoLogicAppender extends AppenderSkeleton {
 
     private long maxQueueSizeBytes = 1000000;
 
+    private String retryableHttpCodeRegex = "^5.*";
+
     private SumoHttpSender sender;
     private SumoBufferFlusher flusher;
     volatile private BufferWithEviction<String> queue;
@@ -192,6 +194,14 @@ public class SumoLogicAppender extends AppenderSkeleton {
         return flushAllBeforeStopping;
     }
 
+    public void setRetryableHttpCodeRegex(String retryableHttpCodeRegex) {
+        this.retryableHttpCodeRegex = retryableHttpCodeRegex;
+    }
+
+    public String getRetryableHttpCodeRegex() {
+        return retryableHttpCodeRegex;
+    }
+
     public void setFlushAllBeforeStopping(boolean flushAllBeforeStopping) {
         this.flushAllBeforeStopping = flushAllBeforeStopping;
     }
@@ -218,9 +228,9 @@ public class SumoLogicAppender extends AppenderSkeleton {
         if (sender == null)
             sender = new SumoHttpSender();
 
-        sender.setRetryInterval(retryInterval);
-        sender.setConnectionTimeout(connectionTimeout);
-        sender.setSocketTimeout(socketTimeout);
+        sender.setRetryIntervalMs(retryInterval);
+        sender.setConnectionTimeoutMs(connectionTimeout);
+        sender.setSocketTimeoutMs(socketTimeout);
         sender.setUrl(url);
         sender.setSourceHost(sourceHost);
         sender.setSourceName(sourceName);
@@ -233,6 +243,7 @@ public class SumoLogicAppender extends AppenderSkeleton {
                 proxyPassword,
                 proxyDomain));
         sender.setClientHeaderValue(CLIENT_NAME);
+        sender.setRetryableHttpCodeRegex(retryableHttpCodeRegex);
         sender.init();
 
         /* Initialize flusher  */
