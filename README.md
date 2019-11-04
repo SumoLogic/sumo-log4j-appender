@@ -100,6 +100,7 @@ Alternatively you can use XML configuration to configure the Sumo Logic Log4j ap
 | proxyPassword      | No       |               | Proxy host password for basic and NTLM authentication. For no authentication proxy, do not specify.                                        |
 | proxyDomain        | No       |               | Proxy host domain name for NTLM authentication only
 | flushAllBeforeStopping        | No       | false              | Flush all messages before stopping regardless of flushingAccuracy. Be sure to call `LogManager.shutdown();` when your application stops.
+| retryableHttpCodeRegex| No       | ^5.*         | Regular expression specifying which HTTP error code(s) should be retried during sending. By default, all 5xx error codes will be retried.
 
 ## TLS 1.2 Requirement
 
