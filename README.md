@@ -1,6 +1,12 @@
 [![Build Status](https://api.travis-ci.org/SumoLogic/sumo-log4j-appender.svg?branch=master)](https://travis-ci.org/SumoLogic/sumo-log4j-appender)
 [![codecov.io](https://codecov.io/github/SumoLogic/sumo-log4j-appender/coverage.svg?branch=master)](https://codecov.io/github/SumoLogic/sumo-log4j-appender?branch=master)
 
+# DEPRECATION NOTICE
+
+This project hes been deprecated and is no longer supported. It will not receive any further updates.
+
+If you are using this project you should migrate to https://github.com/SumoLogic/sumologic-log4j2-appender
+
 # sumo-log4j-appender
 
 A Log4j appender that sends straight to Sumo Logic.
